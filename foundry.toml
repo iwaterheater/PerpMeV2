@@ -1,0 +1,37 @@
+[profile.default]
+src = "src"
+out = "out"
+libs = ["lib"]
+solc_version = "0.8.26"
+optimizer = true
+optimizer_runs = 1000000
+# HyperEVM supports Cancun (no blobs) — PUSH0 and MCOPY available.
+evm_version = "cancun"
+via_ir = true
+
+# The dividend coin alone is compiled for SIZE rather than for gas.
+#
+# Its creation code is carried inside PerpMeTaxTokenDeployer, which must itself
+# stay under EIP-170's 24,576 bytes — so the coin's ceiling is roughly 23,700,
+# and at a million optimizer runs it reached it. Everything else keeps the
+# original setting: the V3 product is already deployed, and recompiling it
+# differently would leave the verification payloads describing bytecode that is
+# not what is on chain.
+[[profile.default.additional_compiler_profiles]]
+name = "coin-for-size"
+optimizer_runs = 200
+via_ir = true
+
+[[profile.default.compilation_restrictions]]
+paths = "src/tax/PerpMeTaxToken.sol"
+optimizer_runs = 200
+
+[rpc_endpoints]
+hyperevm = "https://rpc.hyperliquid.xyz/evm"
+hyperevm_testnet = "https://rpc.hyperliquid-testnet.xyz/evm"
+
+# hyperevmscan.io is an Etherscan-family explorer served by the Etherscan V2
+# API (chainid=999), so `forge verify-contract --chain 999 --etherscan-api-key
+# $ETHERSCAN_API_KEY` works with an ordinary etherscan.io key.
+[etherscan]
+hyperevm = { key = "${ETHERSCAN_API_KEY}", chain = 999, url = "https://api.etherscan.io/v2/api?chainid=999" }
